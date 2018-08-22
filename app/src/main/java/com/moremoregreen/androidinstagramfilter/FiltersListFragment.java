@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
+import android.support.design.widget.BottomSheetDialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
@@ -32,11 +33,18 @@ import java.util.List;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class FiltersListFragment extends Fragment implements FiltersListFragmentListener {
+public class FiltersListFragment extends BottomSheetDialogFragment implements FiltersListFragmentListener {
     RecyclerView recyclerView;
     ThumbnailAdapter adapter;
     List<ThumbnailItem> thumbnailItems;
     FiltersListFragmentListener listener;
+    static FiltersListFragment instance;
+
+    public static FiltersListFragment getInstance() {
+        if (instance == null)
+            instance = new FiltersListFragment();
+        return instance;
+    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -59,6 +67,7 @@ public class FiltersListFragment extends Fragment implements FiltersListFragment
         View itemView = inflater.inflate(R.layout.fragment_filters_list, container, false);
         thumbnailItems = new ArrayList<>();
         adapter = new ThumbnailAdapter(thumbnailItems, this, getActivity());
+
         recyclerView = itemView.findViewById(R.id.recycler_view);
         recyclerView.setLayoutManager
                 (new LinearLayoutManager(getActivity(), LinearLayoutManager.HORIZONTAL, false));
