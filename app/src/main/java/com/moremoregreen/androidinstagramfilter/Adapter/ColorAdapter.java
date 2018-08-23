@@ -1,6 +1,7 @@
 package com.moremoregreen.androidinstagramfilter.Adapter;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
@@ -10,6 +11,7 @@ import android.view.ViewGroup;
 
 import com.moremoregreen.androidinstagramfilter.R;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ColorAdapter extends RecyclerView.Adapter<ColorAdapter.ColorViewHolder> {
@@ -17,9 +19,9 @@ public class ColorAdapter extends RecyclerView.Adapter<ColorAdapter.ColorViewHol
     List<Integer> colorList;
     ColorAdapterListener listener;
 
-    public ColorAdapter(Context context, List<Integer> colorList, ColorAdapterListener listener) {
+    public ColorAdapter(Context context, ColorAdapterListener listener) {
         this.context = context;
-        this.colorList = colorList;
+        this.colorList = genColorList();
         this.listener = listener;
     }
 
@@ -55,7 +57,19 @@ public class ColorAdapter extends RecyclerView.Adapter<ColorAdapter.ColorViewHol
             });
         }
     }
-
+    private List<Integer> genColorList() {
+        List<Integer> colorList = new ArrayList<>();
+        colorList.add(Color.parseColor("#131722"));
+        colorList.add(Color.parseColor("#ffc0cb"));
+        colorList.add(Color.parseColor("#ffffff"));
+        colorList.add(Color.parseColor("#ff0000"));
+        colorList.add(Color.parseColor("#ffd700"));
+        colorList.add(Color.parseColor("#00ffff"));
+        colorList.add(Color.parseColor("#800000"));
+        colorList.add(Color.parseColor("#008080"));
+        colorList.add(Color.parseColor("#660066"));
+        return colorList;
+    }
     public interface ColorAdapterListener {
         void onColorSelected(int color);
     }

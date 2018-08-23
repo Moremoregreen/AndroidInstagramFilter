@@ -60,7 +60,8 @@ public class BrushFragment extends BottomSheetDialogFragment implements ColorAda
         recycler_color = itemView.findViewById(R.id.recycler_color);
         recycler_color.setHasFixedSize(true);
         recycler_color.setLayoutManager(new LinearLayoutManager(getActivity(), LinearLayoutManager.HORIZONTAL, false));
-        colorAdapter = new ColorAdapter(getContext(), genColorList(), this);
+
+        colorAdapter = new ColorAdapter(getContext(), this);
         recycler_color.setAdapter(colorAdapter);
 
         //Event
@@ -105,19 +106,7 @@ public class BrushFragment extends BottomSheetDialogFragment implements ColorAda
         return itemView;
     }
 
-    private List<Integer> genColorList() {
-        List<Integer> colorList = new ArrayList<>();
-        colorList.add(Color.parseColor("#131722"));
-        colorList.add(Color.parseColor("#ffc0cb"));
-        colorList.add(Color.parseColor("#ffffff"));
-        colorList.add(Color.parseColor("#ff0000"));
-        colorList.add(Color.parseColor("#ffd700"));
-        colorList.add(Color.parseColor("#00ffff"));
-        colorList.add(Color.parseColor("#800000"));
-        colorList.add(Color.parseColor("#008080"));
-        colorList.add(Color.parseColor("#660066"));
-        return colorList;
-    }
+
 
     @Override
     public void onColorSelected(int color) {

@@ -26,6 +26,7 @@ import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 import com.moremoregreen.androidinstagramfilter.Adapter.ViewPagerAdapter;
+import com.moremoregreen.androidinstagramfilter.Interface.AddTextFragmentListener;
 import com.moremoregreen.androidinstagramfilter.Interface.BrushFragmentListener;
 import com.moremoregreen.androidinstagramfilter.Interface.EditImageFragmentListener;
 import com.moremoregreen.androidinstagramfilter.Interface.EmojiFragmentListener;
@@ -45,13 +46,13 @@ import ja.burhanrashid52.photoeditor.PhotoEditorView;
 
 
 public class MainActivity extends AppCompatActivity implements FiltersListFragmentListener, EditImageFragmentListener,
-                                                            BrushFragmentListener, EmojiFragmentListener {
+        BrushFragmentListener, EmojiFragmentListener, AddTextFragmentListener {
     public static final String pictureName = "猩猩.jpg";
     public static final int PERMISSION_PICK_IMAGE = 1000;
-
+    public static final int PERMISSION_INSERT_IMAGE = 1001;
     PhotoEditorView photoEditorView;
     PhotoEditor photoEditor;
-//    TabLayout tabLayout;
+    //    TabLayout tabLayout;
 //    ViewPager viewPager;
     CoordinatorLayout coordinatorLayout;
     Bitmap originalBitmap, filteredBitmap, finalBitmap;
@@ -59,7 +60,7 @@ public class MainActivity extends AppCompatActivity implements FiltersListFragme
     FiltersListFragment filtersListFragment;
     EditImageFragment editImageFragment;
 
-    CardView btn_filters_list, btn_edit, btn_brush, btn_emoji;
+    CardView btn_filters_list, btn_edit, btn_brush, btn_emoji, btn_add_text, btn_add_image;
 
     int brightnessFinal = 0;
     float saturationFinal = 1.0F;
@@ -81,9 +82,9 @@ public class MainActivity extends AppCompatActivity implements FiltersListFragme
 
         //View
         photoEditorView = findViewById(R.id.image_preview);
-        photoEditor = new PhotoEditor.Builder(this,photoEditorView)
+        photoEditor = new PhotoEditor.Builder(this, photoEditorView)
                 .setPinchTextScalable(true)
-                .setDefaultEmojiTypeface(Typeface.createFromAsset(getAssets(),"emojione-android3.ttf"))
+                .setDefaultEmojiTypeface(Typeface.createFromAsset(getAssets(), "emojione-android3.ttf"))
                 .build();
 
         coordinatorLayout = findViewById(R.id.coordinator);
@@ -92,14 +93,19 @@ public class MainActivity extends AppCompatActivity implements FiltersListFragme
         btn_filters_list = findViewById(R.id.btn_filters_list);
         btn_brush = findViewById(R.id.btn_brush);
         btn_emoji = findViewById(R.id.btn_emoji);
-
+        btn_add_text = findViewById(R.id.btn_add_text);
+        btn_add_image = findViewById(R.id.btn_add_image);
 
         btn_filters_list.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                FiltersListFragment filtersListFragment = FiltersListFragment.getInstance();
-                filtersListFragment.setListener(MainActivity.this);
-                filtersListFragment.show(getSupportFragmentManager(), filtersListFragment.getTag());
+                if (filtersListFragment != null) {
+                    filtersListFragment.show(getSupportFragmentManager(), filtersListFragment.getTag());
+                } else {
+                    FiltersListFragment filtersListFragment = FiltersListFragment.getInstance(null);
+                    filtersListFragment.setListener(MainActivity.this);
+                    filtersListFragment.show(getSupportFragmentManager(), filtersListFragment.getTag());
+                }
             }
         });
 
@@ -128,12 +134,49 @@ public class MainActivity extends AppCompatActivity implements FiltersListFragme
             public void onClick(View v) {
                 EmojiFragment emojiFragment = EmojiFragment.getInstance();
                 emojiFragment.setListener(MainActivity.this);
-                emojiFragment.show(getSupportFragmentManager(),emojiFragment.getTag());
+                emojiFragment.show(getSupportFragmentManager(), emojiFragment.getTag());
+            }
+        });
+
+        btn_add_text.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AddTextFragment addTextFragment = AddTextFragment.getInstance();
+                addTextFragment.setListener(MainActivity.this);
+                addTextFragment.show(getSupportFragmentManager(), addTextFragment.getTag());
+            }
+        });
+
+        btn_add_image.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                addImageToPicture();
             }
         });
         loadImage();
 
 
+    }
+
+    private void addImageToPicture() {
+        Dexter.withActivity(this)
+                .withPermissions(Manifest.permission.READ_EXTERNAL_STORAGE,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                .withListener(new MultiplePermissionsListener() {
+                    @Override
+                    public void onPermissionsChecked(MultiplePermissionsReport report) {
+                        if (report.areAllPermissionsGranted()) {
+                            Intent intent = new Intent(Intent.ACTION_PICK);
+                            intent.setType("image/*");
+                            startActivityForResult(intent, PERMISSION_INSERT_IMAGE);
+                        }
+                    }
+
+                    @Override
+                    public void onPermissionRationaleShouldBeShown(List<PermissionRequest> permissions, PermissionToken token) {
+                        Toast.makeText(MainActivity.this, "Permission Denied", Toast.LENGTH_SHORT).show();
+                    }
+                }).check();
     }
 
     private void loadImage() {
@@ -200,7 +243,7 @@ public class MainActivity extends AppCompatActivity implements FiltersListFragme
 
     @Override
     public void onFilterSelected(Filter filter) {
-        resetControl();
+//        resetControl();
         filteredBitmap = originalBitmap.copy(Bitmap.Config.ARGB_8888, true);
         photoEditorView.getSource().setImageBitmap(filter.processFilter(filteredBitmap));
         finalBitmap = filteredBitmap.copy(Bitmap.Config.ARGB_8888, true);
@@ -328,22 +371,28 @@ public class MainActivity extends AppCompatActivity implements FiltersListFragme
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == RESULT_OK && requestCode == PERMISSION_PICK_IMAGE) {
-            Bitmap bitmap = BitmapUtils.getBitmapFromGallery(this, data.getData(), 800, 800);
+        if (resultCode == RESULT_OK) {
+            if (requestCode == PERMISSION_PICK_IMAGE) {
+                Bitmap bitmap = BitmapUtils.getBitmapFromGallery(this, data.getData(), 800, 800);
 
-            //釋放bitmap memory
-            originalBitmap.recycle();
-            finalBitmap.recycle();
-            filteredBitmap.recycle();
+                //釋放bitmap memory
+                originalBitmap.recycle();
+                finalBitmap.recycle();
+                filteredBitmap.recycle();
 
-            originalBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
-            finalBitmap = originalBitmap.copy(Bitmap.Config.ARGB_8888, true);
-            filteredBitmap = originalBitmap.copy(Bitmap.Config.ARGB_8888, true);
-            photoEditorView.getSource().setImageBitmap(originalBitmap);
-            bitmap.recycle();
+                originalBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+                finalBitmap = originalBitmap.copy(Bitmap.Config.ARGB_8888, true);
+                filteredBitmap = originalBitmap.copy(Bitmap.Config.ARGB_8888, true);
+                photoEditorView.getSource().setImageBitmap(originalBitmap);
+                bitmap.recycle();
 
-            //Render selected img thumbnail
-            filtersListFragment.displayThumbnail(originalBitmap);
+                filtersListFragment = FiltersListFragment.getInstance(originalBitmap);
+                filtersListFragment.setListener(this);
+            } else if (requestCode == PERMISSION_INSERT_IMAGE) {
+                Bitmap bitmap = BitmapUtils.getBitmapFromGallery(this, data.getData(),200,200);
+                photoEditor.addImage(bitmap);
+
+            }
         }
 
 //        super.onActivityResult(requestCode, resultCode, data);
@@ -366,7 +415,7 @@ public class MainActivity extends AppCompatActivity implements FiltersListFragme
 
     @Override
     public void onBrushStateChangedListener(boolean isEraser) {
-        if(isEraser)
+        if (isEraser)
             photoEditor.brushEraser();
         else
             photoEditor.setBrushDrawingMode(true);
@@ -375,5 +424,10 @@ public class MainActivity extends AppCompatActivity implements FiltersListFragme
     @Override
     public void onEmojiSelected(String emoji) {
         photoEditor.addEmoji(emoji);
+    }
+
+    @Override
+    public void onAddTextButtonClick(String text, int color) {
+        photoEditor.addText(text, color);
     }
 }
